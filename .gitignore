@@ -1,0 +1,133 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environments ──
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ── Environment variables ──
+.env
+.env.local
+.env.*.local
+*.env
+
+# ── Distribution / packaging ──
+dist/
+build/
+*.egg-info/
+*.egg
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# ── Testing ──
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+test-results/
+
+# ── Type checking ──
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.pyre/
+
+# ── Jupyter ──
+.ipynb_checkpoints
+*.ipynb
+
+# ── RAG / vector store data ──
+data/
+embeddings/
+vectorstore/
+chroma/
+chroma_db/
+*.faiss
+*.pkl
+*.index
+uploaded_docs/
+documents/
+vault_index/
+
+# ── Ollama / model files ──
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+models/
+
+# ── NiceGUI ──
+.nicegui/
+
+# ── Logs ──
+*.log
+logs/
+*.log.*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── OS ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Editors ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.settings/
+
+# ── Node (if you ever add a build step) ──
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# ── SQLite (if used for todo/datasheet persistence) ──
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Secrets / keys ──
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+config.local.py
