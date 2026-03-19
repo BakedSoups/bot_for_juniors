@@ -4,404 +4,487 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JohnCode</title>
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/sse.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oxanium:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/cirrus.min.css">
+<link rel="stylesheet" href="vendor/highlight-theme.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<!-- ══ Sidebar ══ -->
-<nav id="sidebar">
-  <div class="logo"></div>
-
-  <button class="nav-btn active" onclick="switchPanel('chat', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-    Chat
-  </button>
-
-  <button class="nav-btn" onclick="switchPanel('docs', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14,2 14,8 20,8"/>
-    </svg>
-    Docs
-  </button>
-
-  <button class="nav-btn" onclick="switchPanel('obsidian', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polygon points="12,2 2,7 12,12 22,7"/>
-      <polyline points="2,17 12,22 22,17"/>
-      <polyline points="2,12 12,17 22,12"/>
-    </svg>
-    Vault
-  </button>
-
-  <button class="nav-btn" onclick="switchPanel('todo', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="9,11 12,14 22,4"/>
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-    </svg>
-    Todo
-  </button>
-
-  <button class="nav-btn" onclick="switchPanel('data', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="3" y="3" width="18" height="18" rx="2"/>
-      <path d="M3 9h18M3 15h18M9 3v18"/>
-    </svg>
-    Data
-  </button>
-</nav>
-
-<!-- ══ Main ══ -->
-<div id="main">
-
-  <!-- Titlebar -->
-  <div class="titlebar">
-    <div class="titlebar-left">
-      <div class="titlebar-dot"></div>
-      <span class="titlebar-title" id="titlebar-text">JohnCode — Chat</span>
-    </div>
-    <div class="titlebar-controls">
-      <div class="wm-btn">—</div>
-      <div class="wm-btn">□</div>
-      <div class="wm-btn close">✕</div>
-    </div>
-  </div>
-
-  <!-- ══ Chat Panel ══ -->
-  <div class="panel active" id="panel-chat">
-    <div id="chat-messages">
-      <div class="msg bot">
-        <div class="msg-label">JohnCode</div>
-        Hello! I'm JohnCode, your local AI assistant.<br>How can I help you today?
-      </div>
-    </div>
-
-    <div id="chat-input-area">
-      <!-- Model selector — populated by GET /api/models -->
-      <select id="model-select"
-        hx-get="/api/models"
-        hx-trigger="load"
-        hx-target="#model-select"
-        hx-swap="innerHTML">
-        <option>loading...</option>
-      </select>
-
-      <textarea id="chat-input"
-        placeholder="Type your message..."
-        rows="1"
-        onkeydown="handleKey(event)"></textarea>
-
-      <button class="send-btn" onclick="sendMessage()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22,2 15,22 11,13 2,9"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- ══ Documents Panel ══ -->
-  <div class="panel" id="panel-docs">
-    <div class="panel-body">
-      <div class="drop-zone"
-        hx-post="/api/upload"
-        hx-encoding="multipart/form-data"
-        hx-trigger="drop"
-        hx-target="#file-list"
-        hx-swap="beforeend"
-        ondragover="event.preventDefault(); this.style.borderColor='var(--gold-dim)'"
-        ondragleave="this.style.borderColor=''"
-        ondrop="handleDrop(event, this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <polyline points="16,16 12,12 8,16"/>
-          <line x1="12" y1="12" x2="12" y2="21"/>
-          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-        </svg>
-        <p>Drop files here or click to upload</p>
-        <small>PDF, DOCX, TXT supported</small>
-        <input type="file" style="display:none" accept=".pdf,.docx,.txt" multiple
-          hx-post="/api/upload"
-          hx-encoding="multipart/form-data"
-          hx-trigger="change"
-          hx-target="#file-list"
-          hx-swap="beforeend">
-      </div>
-
-      <div class="section-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        My Documents
-      </div>
-
-      <div class="file-list" id="file-list"
-        hx-get="/api/documents"
-        hx-trigger="load"
-        hx-swap="innerHTML">
-        <!-- populated by server -->
-      </div>
-
-      <div class="info-box" style="margin-top:16px">
-        Upload documents to enable RAG-powered conversations. The AI will use your documents as context for more accurate responses.
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Obsidian Panel ══ -->
-  <div class="panel" id="panel-obsidian">
-    <div class="panel-body">
-      <div class="vault-status">
-        <div class="vault-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8.5" x2="22" y2="8.5"/><line x1="2" y1="15.5" x2="22" y2="15.5"/></svg>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div>
+          <h1>JohnCode</h1>
         </div>
-        <div class="vault-info">
-          <div class="vault-path">~/Documents/**/*.md</div>
-          <div class="vault-count" id="vault-count"
-            hx-get="/api/vault/status"
-            hx-trigger="load"
-            hx-swap="innerHTML">Scanning...</div>
-        </div>
-        <button class="index-btn"
-          hx-post="/api/vault/index"
-          hx-target="#vault-count"
-          hx-swap="innerHTML"
-          hx-indicator="#vault-indexing">
-          ↻ Re-index
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-panel="chat-panel">Chat</button>
+        <button class="nav-btn" data-panel="docs-panel">
+          <span class="nav-icon" aria-hidden="true">📚</span>
+          <span>Library</span>
         </button>
-      </div>
+      </nav>
+    </aside>
 
-      <div id="vault-indexing" class="htmx-indicator info-box" style="margin-bottom:16px">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        &nbsp; Indexing vault...
-      </div>
+    <main class="main">
+      <section class="panel active" id="chat-panel">
+        <header class="panel-header">
+          <div class="header-row">
+            <div>
+              <p class="eyebrow">Terminal</p>
+              <h2>Ask for hints, reviews, and explanations.</h2>
+            </div>
+            <button id="reset-chat-btn" class="retro-btn" type="button">Reset Chat</button>
+          </div>
+        </header>
 
-      <div class="section-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Indexed Notes
-      </div>
+        <section id="chat-messages" class="messages" aria-live="polite">
+          <article class="message assistant">
+            <p class="message-label">System</p>
+            <div class="message-body">Bridge is starting. Input will unlock when Python reports it is ready.</div>
+          </article>
+        </section>
 
-      <div class="notes-grid" id="notes-list"
-        hx-get="/api/vault/notes"
-        hx-trigger="load"
-        hx-swap="innerHTML">
-        <!-- populated by server -->
-      </div>
-    </div>
+        <form id="chat-composer" class="composer">
+          <textarea id="chat-input" rows="1" placeholder="Waiting for Python..." disabled></textarea>
+          <button id="send-btn" type="submit" disabled>Send</button>
+        </form>
+      </section>
+
+      <section class="panel" id="docs-panel">
+        <header class="panel-header docs-header">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2>Bring in books, docs, and notes, then ask questions against a selected text.</h2>
+          </div>
+          <button id="import-btn" class="retro-btn" type="button">Add To Library</button>
+        </header>
+
+        <div class="docs-layout">
+          <section class="docs-list-wrap">
+            <div class="docs-list-head">
+              <span>Library</span>
+              <span id="docs-count">0 loaded</span>
+            </div>
+            <div id="docs-list" class="docs-list"></div>
+          </section>
+
+          <section class="doc-detail">
+            <div id="doc-empty" class="empty-card">
+              Select a book or reference item to inspect it and ask a grounded question.
+            </div>
+
+            <div id="doc-view" class="doc-view hidden">
+              <div class="doc-card">
+                <div id="doc-cover" class="doc-cover">BOOK</div>
+                <div class="doc-meta">
+                  <p class="eyebrow">Selected Library Item</p>
+                  <h3 id="doc-title">No document</h3>
+                  <p id="doc-size" class="meta-line"></p>
+                  <p id="doc-preview" class="doc-preview"></p>
+                  <div class="doc-actions">
+                    <button id="set-cover-btn" class="retro-btn" type="button">Set Cover Image</button>
+                  </div>
+                </div>
+              </div>
+
+              <form id="doc-composer" class="doc-composer">
+                <textarea id="doc-question" rows="3" placeholder="According to this book, what can I use to speed up my queries?" disabled></textarea>
+                <button id="doc-send-btn" class="retro-btn" type="submit" disabled>Ask Library</button>
+              </form>
+
+              <section id="doc-messages" class="messages doc-messages" aria-live="polite"></section>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- ══ Todo Panel ══ -->
-  <div class="panel" id="panel-todo">
-    <div class="panel-body">
-      <div class="todo-input-row">
-        <input class="todo-input" id="todo-input" type="text"
-          placeholder="Add a new task..."
-          onkeydown="if(event.key==='Enter') addTodo()">
-        <button class="add-btn" onclick="addTodo()">+ Add</button>
-      </div>
-
-      <div class="section-title">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9,11 12,14 22,4"/></svg>
-        Tasks
-      </div>
-
-      <div class="todo-list" id="todo-list"
-        hx-get="/api/todos"
-        hx-trigger="load"
-        hx-swap="innerHTML">
-        <!-- populated by server -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Data Sheet Panel ══ -->
-  <div class="panel" id="panel-data">
-    <div class="ds-toolbar">
-      <button class="ds-btn"
-        hx-get="/api/datasheet/add-form"
-        hx-target="#ds-modal"
-        hx-swap="innerHTML">
-        + Add Entry
-      </button>
-      <button class="ds-btn"
-        hx-post="/api/datasheet/generate"
-        hx-target="#ds-table-body"
-        hx-swap="beforeend">
-        ↻ Generate
-      </button>
-      <button class="ds-btn export"
-        hx-get="/api/datasheet/export"
-        hx-swap="none">
-        ↓ Export
-      </button>
-    </div>
-
-    <div class="ds-table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th style="text-align:right">Amount</th>
-          </tr>
-        </thead>
-        <tbody id="ds-table-body"
-          hx-get="/api/datasheet/entries"
-          hx-trigger="load"
-          hx-swap="innerHTML">
-          <!-- populated by server -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="ds-summary" id="ds-summary"
-      hx-get="/api/datasheet/summary"
-      hx-trigger="load"
-      hx-swap="innerHTML">
-      <!-- populated by server -->
-    </div>
-
-    <div id="ds-modal"></div>
-  </div>
-
-</div><!-- /main -->
-
+<script src="vendor/highlight.min.js"></script>
 <script>
-  const panels = {
-    chat:     { el: 'panel-chat',     title: 'JohnCode — Chat' },
-    docs:     { el: 'panel-docs',     title: 'JohnCode — Documents' },
-    obsidian: { el: 'panel-obsidian', title: 'JohnCode — Vault' },
-    todo:     { el: 'panel-todo',     title: 'JohnCode — Todo' },
-    data:     { el: 'panel-data',     title: 'JohnCode — Data Sheet' },
-  };
+const state = {
+  bridge: null,
+  bridgeReady: false,
+  busy: false,
+  currentReplyId: null,
+  activeTarget: "chat",
+  documents: [],
+  selectedDocument: null,
+  scrollFrame: null,
+};
 
-  function switchPanel(name, btn) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(panels[name].el).classList.add('active');
-    document.getElementById('titlebar-text').textContent = panels[name].title;
-    btn.classList.add('active');
-  }
+function esc(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  }
+function renderInline(text) {
+  return esc(text)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
 
-  async function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
+function renderMarkdown(text) {
+  const source = String(text || "").replace(/\r\n/g, "\n");
+  const parts = source.split(/```/);
+  const html = [];
 
-    const model = document.getElementById('model-select').value;
-    const messages = document.getElementById('chat-messages');
+  for (let i = 0; i < parts.length; i += 1) {
+    if (i % 2 === 1) {
+      const block = parts[i];
+      const firstNewline = block.indexOf("\n");
+      const hasLanguage = firstNewline !== -1;
+      const language = hasLanguage ? block.slice(0, firstNewline).trim() : "";
+      const code = hasLanguage ? block.slice(firstNewline + 1) : block;
+      const className = language ? ` class="language-${esc(language)}"` : "";
+      html.push(`<pre><code${className}>${esc(code)}</code></pre>`);
+      continue;
+    }
 
-    // Append user bubble
-    messages.innerHTML += `
-      <div class="msg user">
-        <div class="msg-label">YOU</div>
-        ${escHtml(text)}
-      </div>`;
+    const chunks = parts[i]
+      .split(/\n{2,}/)
+      .map(part => part.trim())
+      .filter(Boolean);
 
-    // Append bot bubble for streaming
-    const botId = 'msg-' + Date.now();
-    messages.innerHTML += `
-      <div class="msg bot" id="${botId}">
-        <div class="msg-label">JohnCode</div>
-        <span id="${botId}-text"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span>
-      </div>`;
-
-    input.value = '';
-    messages.scrollTop = messages.scrollHeight;
-
-    // Stream from /api/chat
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt: text })
-    });
-
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    const target = document.getElementById(botId + '-text');
-    target.textContent = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const lines = dec.decode(value).split('\n').filter(Boolean);
-      for (const line of lines) {
-        try {
-          const j = JSON.parse(line);
-          if (j.response) target.textContent += j.response;
-        } catch {}
-      }
-      messages.scrollTop = messages.scrollHeight;
+    for (const chunk of chunks) {
+      html.push(`<p>${renderInline(chunk).replace(/\n/g, "<br>")}</p>`);
     }
   }
 
-  function addTodo(parentId = null) {
-    const inputEl = parentId
-      ? document.getElementById('sub-input-' + parentId)
-      : document.getElementById('todo-input');
-    const text = inputEl.value.trim();
-    if (!text) return;
+  return html.join("") || "<p></p>";
+}
 
-    const id = 'todo-' + Date.now();
+function applyHighlighting(root) {
+  if (!window.hljs || !root) return;
+  root.querySelectorAll("pre code").forEach(function(block) {
+    window.hljs.highlightElement(block);
+  });
+}
 
-    const itemHtml = `
-      <div class="todo-item" id="${id}">
-        <input type="checkbox" onchange="toggleTodo(this, '${id}')">
-        <span class="todo-text">${escHtml(text)}</span>
-        <button class="sub-add-btn" onclick="toggleSubInput('${id}')" title="Add subtask">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button class="todo-delete" onclick="document.getElementById('${id}').remove(); fetch('/api/todos/${id}', {method:'DELETE'})">✕</button>
-      </div>
-      <div class="sub-input-row" id="sub-row-${id}" style="display:none">
-        <input class="todo-input sub-input" id="sub-input-${id}" type="text"
-          placeholder="Add subtask..."
-          onkeydown="if(event.key==='Enter') addTodo('${id}')">
-        <button class="add-btn" onclick="addTodo('${id}')">Add</button>
-      </div>
-      <div class="subtask-list" id="subtasks-${id}"></div>`;
+function currentMessagesEl() {
+  return state.activeTarget === "docs"
+    ? document.getElementById("doc-messages")
+    : document.getElementById("chat-messages");
+}
 
-    if (parentId) {
-      document.getElementById('subtasks-' + parentId).innerHTML += itemHtml;
-      document.getElementById('sub-row-' + parentId).style.display = 'none';
+function smoothScrollToBottom(element) {
+  if (!element) return;
+
+  if (state.scrollFrame) {
+    window.cancelAnimationFrame(state.scrollFrame);
+  }
+
+  const startTop = element.scrollTop;
+  const targetTop = element.scrollHeight - element.clientHeight;
+  const delta = targetTop - startTop;
+
+  if (delta <= 0) return;
+
+  const startTime = performance.now();
+  const duration = 420;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    element.scrollTop = startTop + delta * eased;
+
+    if (progress < 1) {
+      state.scrollFrame = window.requestAnimationFrame(step);
     } else {
-      document.getElementById('todo-list').innerHTML += itemHtml;
+      state.scrollFrame = null;
+    }
+  }
+
+  state.scrollFrame = window.requestAnimationFrame(step);
+}
+
+function appendMessage(target, role, label, content, id = null) {
+  const article = document.createElement("article");
+  article.className = `message ${role}`;
+  article.classList.add("message-enter");
+  article.innerHTML = `
+    <p class="message-label">${esc(label)}</p>
+    <div class="message-body"${id ? ` id="${id}"` : ""}>${renderMarkdown(content)}</div>
+  `;
+  const parent = target === "docs" ? document.getElementById("doc-messages") : document.getElementById("chat-messages");
+  parent.appendChild(article);
+  applyHighlighting(article);
+  smoothScrollToBottom(parent);
+}
+
+function syncInputs(statusText) {
+  const ready = state.bridgeReady && !state.busy;
+
+  const chatInput = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("send-btn");
+  chatInput.disabled = !ready;
+  sendBtn.disabled = !ready;
+  chatInput.placeholder = ready ? "Ask for a nudge, review, or explanation..." : "Waiting for Python...";
+
+  const docQuestion = document.getElementById("doc-question");
+  const docSend = document.getElementById("doc-send-btn");
+  const docReady = ready && Boolean(state.selectedDocument);
+  docQuestion.disabled = !docReady;
+  docSend.disabled = !docReady;
+}
+
+function autosize(textarea) {
+  textarea.style.height = "0px";
+  textarea.style.height = Math.min(textarea.scrollHeight, 220) + "px";
+}
+
+function setPanel(panelId) {
+  document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+  const panel = document.getElementById(panelId);
+  panel.classList.add("active");
+  panel.classList.remove("panel-enter");
+  window.requestAnimationFrame(() => panel.classList.add("panel-enter"));
+  document.querySelector(`[data-panel="${panelId}"]`).classList.add("active");
+}
+
+function renderDocuments() {
+  const docsList = document.getElementById("docs-list");
+  document.getElementById("docs-count").textContent = `${state.documents.length} loaded`;
+
+  if (!state.documents.length) {
+    docsList.innerHTML = '<div class="empty-list">No library items yet. Add a PDF, text file, or note to start.</div>';
+    return;
+  }
+
+  docsList.innerHTML = state.documents.map(doc => `
+    <button class="doc-item ${state.selectedDocument && state.selectedDocument.name === doc.name ? "active" : ""}" data-doc="${esc(doc.name)}">
+      <div class="doc-thumb">${doc.cover ? `<img src="${esc(doc.cover)}" alt="">` : "BOOK"}</div>
+      <div class="doc-copy">
+        <strong>${esc(doc.name)}</strong>
+        <span>${esc(doc.size)} • ${esc(doc.kind.toUpperCase())}</span>
+      </div>
+    </button>
+  `).join("");
+
+  docsList.querySelectorAll(".doc-item").forEach(button => {
+    button.addEventListener("click", function() {
+      const name = this.dataset.doc;
+      const doc = state.documents.find(entry => entry.name === name);
+      if (!doc) return;
+      state.selectedDocument = doc;
+      showSelectedDocument();
+      renderDocuments();
+      syncInputs(state.bridgeReady ? "Python ready" : "Waiting for Python");
+    });
+  });
+}
+
+function showSelectedDocument() {
+  const empty = document.getElementById("doc-empty");
+  const view = document.getElementById("doc-view");
+  if (!state.selectedDocument) {
+    empty.classList.remove("hidden");
+    view.classList.add("hidden");
+    return;
+  }
+
+  empty.classList.add("hidden");
+  view.classList.remove("hidden");
+  document.getElementById("doc-title").textContent = state.selectedDocument.name;
+  document.getElementById("doc-size").textContent = `${state.selectedDocument.size} • ${state.selectedDocument.kind.toUpperCase()}`;
+  document.getElementById("doc-preview").textContent = state.selectedDocument.preview || "No preview extracted yet.";
+  document.getElementById("doc-cover").innerHTML = state.selectedDocument.cover
+    ? `<img src="${esc(state.selectedDocument.cover)}" alt="">`
+    : "BOOK";
+}
+
+function showBootstrap(data) {
+  state.bridgeReady = Boolean(data.ready);
+  state.busy = false;
+  document.getElementById("chat-messages").innerHTML = "";
+  appendMessage("chat", "assistant", "System", "Python bridge ready.");
+  syncInputs(data.ready ? "Python ready" : "Python unavailable");
+}
+
+function ensureModelReady() {
+  state.bridgeReady = false;
+  state.busy = true;
+  syncInputs("Preparing model");
+  state.bridge.ensure_model(function(result) {
+    const data = JSON.parse(result);
+    state.bridgeReady = true;
+    state.busy = false;
+
+    if (!data.ok) {
+      appendMessage("chat", "assistant", "System", `Custom model setup failed. ${data.error || "Using current model."}`);
+      syncInputs("Model setup failed");
+      return;
     }
 
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, text, parentId })
-    });
+    syncInputs("Python ready");
+  });
+}
 
-    inputEl.value = '';
+function loadDocuments() {
+  state.bridge.get_documents(function(result) {
+    state.documents = JSON.parse(result);
+    if (state.selectedDocument) {
+      state.selectedDocument = state.documents.find(doc => doc.name === state.selectedDocument.name) || null;
+    }
+    renderDocuments();
+    showSelectedDocument();
+    syncInputs(state.bridgeReady ? "Python ready" : "Waiting for Python");
+  });
+}
+
+function startReply(target) {
+  state.activeTarget = target;
+  const id = `reply-${Date.now()}`;
+  state.currentReplyId = id;
+  appendMessage(target, "assistant", target === "docs" ? "Document" : "JohnCode", "", id);
+  const reply = document.getElementById(id);
+  reply.innerHTML = '<span class="typing">Thinking</span>';
+}
+
+function finishReply() {
+  state.currentReplyId = null;
+  state.busy = false;
+  syncInputs(state.bridgeReady ? "Python ready" : "Python unavailable");
+}
+
+function bindBridge(bridge) {
+  state.bridge = bridge;
+
+  bridge.token_received.connect(function(token) {
+    const reply = document.getElementById(state.currentReplyId);
+    if (!reply) return;
+    if (reply.querySelector(".typing")) {
+      reply.innerHTML = "";
+    }
+    const nextText = (reply.dataset.raw || "") + token;
+    reply.dataset.raw = nextText;
+    reply.innerHTML = renderMarkdown(nextText);
+    applyHighlighting(reply);
+    smoothScrollToBottom(currentMessagesEl());
+  });
+
+  bridge.chat_error.connect(function(errorText) {
+    const reply = document.getElementById(state.currentReplyId);
+    if (reply) {
+      reply.dataset.raw = `Request failed: ${errorText}`;
+      reply.innerHTML = renderMarkdown(reply.dataset.raw);
+    } else {
+      appendMessage(state.activeTarget, "assistant", "System", `Request failed: ${errorText}`);
+    }
+  });
+
+  bridge.chat_done.connect(function() {
+    finishReply();
+  });
+
+  bridge.get_bootstrap(function(result) {
+    showBootstrap(JSON.parse(result));
+    ensureModelReady();
+    loadDocuments();
+  });
+}
+
+function waitForBridge() {
+  if (typeof QWebChannel === "undefined" || !window.qt || !qt.webChannelTransport) {
+    window.setTimeout(waitForBridge, 50);
+    return;
   }
 
-  function toggleSubInput(id) {
-    const row = document.getElementById('sub-row-' + id);
-    const visible = row.style.display !== 'none';
-    row.style.display = visible ? 'none' : 'flex';
-    if (!visible) document.getElementById('sub-input-' + id).focus();
-  }
+  new QWebChannel(qt.webChannelTransport, function(channel) {
+    bindBridge(channel.objects.bridge);
+  });
+}
 
-  function toggleTodo(cb, id) {
-    const item = document.getElementById(id);
-    item.classList.toggle('done', cb.checked);
-    fetch(`/api/todos/${id}/toggle`, { method: 'POST' });
-  }
+document.querySelectorAll(".nav-btn").forEach(button => {
+  button.addEventListener("click", function() {
+    setPanel(this.dataset.panel);
+  });
+});
 
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+document.getElementById("chat-composer").addEventListener("submit", function(event) {
+  event.preventDefault();
+  if (!state.bridgeReady || state.busy) return;
+  const input = document.getElementById("chat-input");
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  appendMessage("chat", "user", "You", prompt);
+  input.value = "";
+  autosize(input);
+  state.busy = true;
+  syncInputs("Running request");
+  startReply("chat");
+  state.bridge.chat(prompt);
+});
+
+document.getElementById("doc-composer").addEventListener("submit", function(event) {
+  event.preventDefault();
+  if (!state.bridgeReady || state.busy || !state.selectedDocument) return;
+  const input = document.getElementById("doc-question");
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  appendMessage("docs", "user", "You", prompt);
+  input.value = "";
+  autosize(input);
+  state.busy = true;
+  syncInputs("Searching document");
+  startReply("docs");
+  state.bridge.ask_document(state.selectedDocument.name, prompt);
+});
+
+document.getElementById("import-btn").addEventListener("click", function() {
+  if (!state.bridge) return;
+  state.bridge.pick_document(function(result) {
+    const data = JSON.parse(result);
+    if (!data.ok) return;
+    loadDocuments();
+    setPanel("docs-panel");
+    state.selectedDocument = data.document;
+    renderDocuments();
+    showSelectedDocument();
+    appendMessage("docs", "assistant", "System", `Added ${data.document.name} to the library. Ask a question about it when you're ready.`);
+    syncInputs(state.bridgeReady ? "Python ready" : "Waiting for Python");
+  });
+});
+
+document.getElementById("set-cover-btn").addEventListener("click", function() {
+  if (!state.bridge || !state.selectedDocument) return;
+  state.bridge.pick_cover_image(state.selectedDocument.name, function(result) {
+    const data = JSON.parse(result);
+    if (!data.ok) return;
+    state.selectedDocument = data.document;
+    showSelectedDocument();
+    loadDocuments();
+  });
+});
+
+["chat-input", "doc-question"].forEach(id => {
+  const textarea = document.getElementById(id);
+  textarea.addEventListener("input", function() {
+    autosize(this);
+  });
+  textarea.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      this.form.requestSubmit();
+    }
+  });
+});
+
+document.getElementById("reset-chat-btn").addEventListener("click", function() {
+  state.currentReplyId = null;
+  document.getElementById("chat-messages").innerHTML = "";
+  appendMessage("chat", "assistant", "System", "Chat reset. Start a fresh one-shot prompt when you are ready.");
+  document.getElementById("chat-input").value = "";
+  autosize(document.getElementById("chat-input"));
+  syncInputs(state.bridgeReady ? "Python ready" : "Waiting for Python");
+});
+
+waitForBridge();
 </script>
 </body>
 </html>
