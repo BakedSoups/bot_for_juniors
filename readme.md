@@ -1,12 +1,13 @@
 ## Aim of this project
 
 ### Personal reasoning 
-I found that ai chat bots are great for getting full solutions/awnsers.
+I found that ai chat bots are great for getting full solutions to my coding problems.
 
 but  I personally find that as a junior, I learn best by trying to solve a problem myself. 
-maybe dowwn the line, when I'm a senior who truly understands the ins and outs of programming, I can hand off task to AI, but for now, I want to be able to solve problems on my own. 
+maybe down the line, when I'm a senior who truly understands the ins and outs of programming, I can hand off task to AI, but for now, I want to be able to solve problems on my own. 
 
-So as I start my coding journey, I could go all the way with no ai, but there are still some small caveats in documents and such that I would like to learn.
+I could go all the way with no ai, but there are still some small caveats in documentation and such that I would like to learn.
+
 Additionally, there are times where I want to ask a question like "should I abstract to springboot?" or "is this architecture good?" which can be great for ai to awnser. 
 
 
